@@ -141,6 +141,13 @@ def test_listen_state_with_old(hass_driver):
         "media_player.smart_tv", "source", "Spotify", "TV", {}
     )
 
+def test_listen_state_should_return_handle(hass_driver):
+    listen_state = hass_driver.get_mock("listen_state")
+    handler = mock.Mock()
+    handle = listen_state(handler, "media_player.smart_tv", attribute="source", old="Spotify")
+
+    assert handle is not None
+
 
 def test_setup_does_not_trigger_spys(hass_driver):
     listen_state = hass_driver.get_mock("listen_state")
@@ -158,6 +165,34 @@ def test_setup_does_not_trigger_spys(hass_driver):
     assert handler.call_count == 1
 
 
+@pytest.mark.parametrize('update_state', [True, False])
+def test_turn_on_does_change_state_if_wanted(hass_driver, my_logging_app, update_state):
+    hass_driver.update_states = update_state
+    turn_on = hass_driver.get_mock("turn_on")
+    get_state = hass_driver.get_mock("get_state")
+
+    assert get_state("light.1") == "off"
+
+    my_logging_app.turn_on("light.1")
+    assert turn_on.call_count == 1
+    assert get_state("light.1") == "on" if update_state else "off"
+
+@pytest.mark.parametrize('update_state', [True, False])
+def test_turn_off_does_change_state_if_wanted(hass_driver, my_logging_app, update_state):
+    hass_driver.update_states = update_state
+
+    hass_driver.set_state("light.1", "on")
+
+    turn_off = hass_driver.get_mock("turn_off")
+    get_state = hass_driver.get_mock("get_state")
+
+    assert get_state("light.1") == "on"
+
+    my_logging_app.turn_off("light.1")
+    assert turn_off.call_count == 1
+    assert get_state("light.1") == "off" if update_state else "on"
+
+
 class MyLoggingApp(hass.Hass):
     def initialize(self):
         self.log("This is a log")
@@ -170,8 +205,6 @@ def my_logging_app():
 
 
 def test_log(hass_driver, my_logging_app: MyLoggingApp):
-    hass_driver.inject_mocks()
-
     my_logging_app.initialize()
 
     log = hass_driver.get_mock("log")
@@ -183,6 +216,7 @@ def test_log(hass_driver, my_logging_app: MyLoggingApp):
 @pytest.fixture
 def hass_driver() -> HassDriver:
     hass_driver = HassDriver()
+    hass_driver.inject_mocks()
     hass_driver._states = {
         "light.1": {"state": "off", "linkquality": 60},
         "light.2": {"state": "on", "linkquality": 10, "brightness": 60},
