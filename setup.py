@@ -19,6 +19,9 @@ setup(
     tests_require=tests_require,
     extras_require={"test": tests_require, "pytest": ["pytest"]},
     license="MIT",
-    classifiers=["Framework :: Pytest"],
+    classifiers=[
+        "Framework :: Pytest",
+        "Programming Language :: Python :: 3.11",
+    ],
     packages=find_packages(exclude=("appdaemon_testing_tests",)),
 )

@@ -4,4 +4,4 @@
 from .hass_driver import HassDriver
 
 __all__ = ["HassDriver"]
-__version__ = "0.0.0-dev"
+__version__ = "0.1.5"
